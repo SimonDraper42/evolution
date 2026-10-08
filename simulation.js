@@ -1,4 +1,7 @@
 export const WIDTH = 1000, HEIGHT = 650;
+export const LIFESPAN = 180;
+// Aging affects movement, not the base speed inherited by offspring.
+export const movementSpeed = c => c.speed * (1 - .75 * Math.max(0, Math.min(1, c.age / LIFESPAN)));
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 export class Ecosystem {
@@ -29,6 +32,8 @@ export class Ecosystem {
     for(const c of this.creatures) {
       if(c.energy<=0) continue;
       c.age+=dt; c.cooldown-=dt;
+      if(c.age>=LIFESPAN) { c.energy=0; continue; }
+      const currentSpeed=movementSpeed(c);
       c.energy-=dt*(.65+c.speed*c.speed*.13+c.size*.06+c.sense*.0015);
       const target=this.target(c);
       let dx=0,dy=0;
@@ -42,8 +47,8 @@ export class Ecosystem {
         }
       }
       if(dx||dy) c.angle=Math.atan2(dy,dx); else c.angle+=(this.random()-.5)*dt*2;
-      c.x=clamp(c.x+Math.cos(c.angle)*c.speed*18*dt,c.size,WIDTH-c.size);
-      c.y=clamp(c.y+Math.sin(c.angle)*c.speed*18*dt,c.size,HEIGHT-c.size);
+      c.x=clamp(c.x+Math.cos(c.angle)*currentSpeed*18*dt,c.size,WIDTH-c.size);
+      c.y=clamp(c.y+Math.sin(c.angle)*currentSpeed*18*dt,c.size,HEIGHT-c.size);
       if(c.x===c.size||c.x===WIDTH-c.size||c.y===c.size||c.y===HEIGHT-c.size) c.angle+=Math.PI*.7;
       if(target && distance(c,target)<c.size+4) {
         if(c.type==='herbivore') {const i=this.food.indexOf(target);if(i>=0){this.food.splice(i,1);c.energy=Math.min(160,c.energy+target.energy);}}
@@ -55,7 +60,7 @@ export class Ecosystem {
         newborns.push({type:c.type,traits:{speed:mutate(c.speed,.3),sense:mutate(c.sense,20),size:mutate(c.size,1)},point:{x:clamp(c.x+10,12,WIDTH-12),y:clamp(c.y+10,12,HEIGHT-12)},generation:c.generation+1});
       }
     }
-    this.creatures=this.creatures.filter(c=>c.energy>0 && c.age<180);
+    this.creatures=this.creatures.filter(c=>c.energy>0 && c.age<LIFESPAN);
     for(const b of newborns) this.add(b.type,b.traits,b.point,b.generation);
   }
 }

@@ -21,4 +21,4 @@ Requires Node.js 18 or newer.
 node --test simulation.test.mjs
 ```
 
-This is a simplified educational model rather than a scientific simulation. Movement and sensing have energy costs, body size controls predation, green food regrows, and creatures die from hunger or old age. Offspring inherit mutated traits; changes in population averages can also reflect creatures you manually add. The world supports up to 250 creatures and 300 food patches to keep browser performance manageable. There is no account system or persistence yet.
+This is a simplified educational model rather than a scientific simulation. Movement and sensing have energy costs, body size controls predation, green food regrows, and creatures die from hunger or old age. Movement speed gradually falls from 100% at birth to 25% at the end of an 18-day lifespan (180 simulation seconds). Aging does not alter the base speed trait passed to offspring. Offspring inherit mutated traits; changes in population averages can also reflect creatures you manually add. The world supports up to 250 creatures and 300 food patches to keep browser performance manageable. There is no account system or persistence yet.
