@@ -3,7 +3,7 @@ const $=id=>document.getElementById(id);
 const canvas=$('world'), ctx=canvas.getContext('2d'), sim=new Ecosystem();
 let type='herbivore',paused=false,speed=1,last=0,statsAt=0;
 const traits=()=>({speed:Number($('speedTrait').value),sense:Number($('senseTrait').value),size:Number($('sizeTrait').value)});
-function select(next){type=next;for(const [id,t] of [['herbType','herbivore'],['carnType','carnivore']]){$(id).classList.toggle('active',t===type);$(id).setAttribute('aria-pressed',String(t===type));}$('typeHelp').textContent=type==='herbivore'?'Grazes on green food and stays close to its herd.':'Hunts herbivores, then smaller carnivores when food is scarce.';}
+function select(next){type=next;for(const [id,t] of [['herbType','herbivore'],['carnType','carnivore']]){$(id).classList.toggle('active',t===type);$(id).setAttribute('aria-pressed',String(t===type));}$('typeHelp').textContent=type==='herbivore'?'Grazes on green food and stays close to its herd.':'Prefers herbivores and smaller rivals; hunger can trigger risky attacks on larger rivals.';}
 $('herbType').onclick=()=>select('herbivore');$('carnType').onclick=()=>select('carnivore');
 for(const trait of ['speed','sense','size']) $(trait+'Trait').oninput=()=>$(trait+'Value').textContent=$(trait+'Trait').value;
 $('add').onclick=()=>{sim.addGroup(type,traits());update();};
@@ -19,6 +19,8 @@ function update(){
     const group=sim.creatures.filter(c=>c.type===t);$(count).textContent=group.length;
     for(const [trait,suffix] of [['speed','s'],['sense','v'],['size','z']]) $(prefix+suffix).textContent=group.length?(group.reduce((sum,c)=>sum+c[trait],0)/group.length).toFixed(trait==='sense'?0:1):'—';
   }
+  const herbs=sim.creatures.filter(c=>c.type==='herbivore');
+  $('survivalSkill').textContent=herbs.length ? Math.round(100*herbs.reduce((sum,c)=>sum+c.survival,0)/herbs.length)+'%' : '—';
   $('status').textContent=sim.creatures.length===0?'All creatures have died. Add new creatures or start a new world.':sim.creatures.length>=250?'Population limit reached (250). Creatures can reproduce again when space opens.':'Traits mutate at birth. Only surviving creatures contribute to these averages.';
 }
 function draw(){

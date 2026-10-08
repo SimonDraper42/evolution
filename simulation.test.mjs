@@ -44,3 +44,20 @@ test('hungry herbivores can miss predator cues, while fed herbivores flee',()=>{
 test('feeding reduces hunger and temporary mistakes expire',async()=>{
  const {hungerLevel}=await import('./simulation.js');const s=new Ecosystem(()=>.5);const c=s.add('herbivore',traits,{x:100,y:100});c.energy=10;const before=hungerLevel(c);s.food.push({x:100,y:100,energy:24});s.step(.01);assert.ok(hungerLevel(c)<before);c.mistake=.1;c.energy=65;s.step(.2);assert.equal(c.mistake,0);assert.equal(hungerLevel({energy:100}),0);assert.equal(hungerLevel({energy:0}),1);
 });
+test('larger rivals discourage attacks, while hunger increases willingness',async()=>{
+ const {rivalAttackChance}=await import('./simulation.js');const hunter={size:6,energy:10};assert.ok(rivalAttackChance(hunter,{size:7})>rivalAttackChance(hunter,{size:12}));assert.ok(rivalAttackChance(hunter,{size:8})>rivalAttackChance({...hunter,energy:65},{size:8}));
+ const s=new Ecosystem(()=>.5);const c=s.add('carnivore',{...traits,size:6},{x:100,y:100});const rival=s.add('carnivore',{...traits,size:9},{x:120,y:100});c.energy=10;c.aggression=2;c.riskTolerance=1;assert.equal(s.target(c),undefined);c.riskTolerance=0;assert.equal(s.target(c),rival);c.aggression=0;assert.equal(s.target(c),undefined);
+});
+test('risking a larger rival can defeat the attacker',()=>{
+ const s=new Ecosystem(()=>.99);const c=s.add('carnivore',{...traits,size:5});const rival=s.add('carnivore',{...traits,size:10});s.attack(c,rival);assert.equal(c.energy,0);assert.ok(rival.energy>65);
+});
+test('surviving an encounter teaches skill once, bounded at 100 percent',()=>{
+ const s=new Ecosystem(()=>.5);const herb=s.add('herbivore',{...traits,size:5},{x:100,y:100});const predator=s.add('carnivore',traits,{x:230,y:100});for(let i=0;i<20;i++)s.step(.05);assert.equal(herb.survival,0);predator.x=900;s.step(.05);assert.equal(herb.survival,.08);s.step(.05);assert.equal(herb.survival,.08);herb.survival=.99;herb.exposure=1;s.step(.05);assert.equal(herb.survival,1);
+});
+test('offspring receive part of parental survival knowledge',()=>{
+ const s=new Ecosystem(()=>.5);const parent=s.add('herbivore',{...traits,survival:.8});parent.energy=120;parent.cooldown=0;s.step(.01);const child=s.creatures.find(c=>c.id!==parent.id);assert.ok(Math.abs(child.survival-.6)<1e-10);assert.equal(child.exposure,0);
+});
+test('survival knowledge reduces hunger errors and detects threats sooner',()=>{
+ const run=(survival,energy,random,predatorX)=>{const s=new Ecosystem(()=>random);const herb=s.add('herbivore',{...traits,size:5,survival},{x:100,y:100});herb.energy=energy;herb.angle=0;if(predatorX)s.add('carnivore',traits,{x:predatorX,y:100});s.step(.1);return herb;};
+ assert.ok(run(0,10,.05).mistake>0);assert.equal(run(1,10,.05).mistake,0);assert.ok(run(1,65,.5,270).x<100);assert.ok(run(0,65,.5,270).x>100);
+});
