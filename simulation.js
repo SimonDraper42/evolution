@@ -3,13 +3,14 @@ export const LIFESPAN = 180;
 // Aging affects movement, not the base speed inherited by offspring.
 export const movementSpeed = c => c.speed * (1 - .75 * Math.max(0, Math.min(1, c.age / LIFESPAN)));
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+export const hungerLevel = c => clamp(1 - c.energy / 65, 0, 1);
 const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 export class Ecosystem {
   constructor(random = Math.random) { this.random = random; this.creatures = []; this.food = []; this.time = 0; this.nextId = 1; }
   point() { return { x: this.random() * WIDTH, y: this.random() * HEIGHT }; }
   add(type, traits, point = this.point(), generation = 1) {
     if (this.creatures.length >= 250) return null;
-    const c = { id: this.nextId++, type, ...point, speed: clamp(traits.speed,.6,3), sense: clamp(traits.sense,40,220), size: clamp(traits.size,4,12), generation, energy: 65, age: 0, cooldown: 12, angle: this.random()*Math.PI*2 };
+    const c = { id: this.nextId++, type, ...point, speed: clamp(traits.speed,.6,3), sense: clamp(traits.sense,40,220), size: clamp(traits.size,4,12), generation, energy: 65, age: 0, cooldown: 12, aggression: 0, mistake: 0, mistakeTurn: 0, angle: this.random()*Math.PI*2 };
     this.creatures.push(c); return c;
   }
   addGroup(type, traits, count = 5) {
@@ -45,12 +46,22 @@ export class Ecosystem {
       if(c.energy<=0) continue;
       c.age+=dt; c.cooldown-=dt;
       if(c.age>=LIFESPAN) { c.energy=0; continue; }
-      const currentSpeed=movementSpeed(c);
-      c.energy-=dt*(.65+c.speed*c.speed*.13+c.size*.06+c.sense*.0015);
+      c.aggression=Math.max(0,c.aggression-dt);
+      c.mistake=Math.max(0,c.mistake-dt);
+      const hunger=hungerLevel(c);
+      // Time-based event rates keep decisions independent of frame rate.
+      if(c.type==='carnivore' && c.aggression===0 && this.random()<1-Math.exp(-hunger*1.2*dt)) c.aggression=2;
+      if(c.type==='herbivore' && c.mistake===0 && this.random()<1-Math.exp(-hunger*1.2*dt)) {
+        c.mistake=1.5;
+        c.mistakeTurn=(this.random()<.5?-1:1)*Math.PI/3;
+      }
+      const chaseBoost=c.aggression>0 ? 1+.4*hunger : 1;
+      const currentSpeed=movementSpeed(c)*chaseBoost;
+      c.energy-=dt*(.65+c.speed*c.speed*.13*chaseBoost*chaseBoost+c.size*.06+c.sense*.0015);
       const target=this.target(c);
       let dx=0,dy=0;
       if(target) {dx=target.x-c.x;dy=target.y-c.y;}
-      if(c.type==='herbivore') {
+      if(c.type==='herbivore' && c.mistake===0) {
         const threats=this.creatures.filter(p=>p.type==='carnivore' && p.energy>0 && p.size>c.size && distance(c,p)<c.sense);
         if(threats.length) {for(const p of threats){const d=Math.max(1,distance(c,p));dx+=(c.x-p.x)*c.sense*3/d;dy+=(c.y-p.y)*c.sense*3/d;}}
         else {
@@ -58,7 +69,7 @@ export class Ecosystem {
           for(const p of neighbors) {const d=distance(c,p); const force=d<18?-2:.12; dx+=(p.x-c.x)*force;dy+=(p.y-c.y)*force;}
         }
       }
-      if(dx||dy) c.angle=Math.atan2(dy,dx); else c.angle+=(this.random()-.5)*dt*2;
+      if(dx||dy) c.angle=Math.atan2(dy,dx)+(c.mistake>0?c.mistakeTurn:0); else c.angle+=(this.random()-.5)*dt*2;
       c.x=clamp(c.x+Math.cos(c.angle)*currentSpeed*18*dt,c.size,WIDTH-c.size);
       c.y=clamp(c.y+Math.sin(c.angle)*currentSpeed*18*dt,c.size,HEIGHT-c.size);
       if(c.x===c.size||c.x===WIDTH-c.size||c.y===c.size||c.y===HEIGHT-c.size) c.angle+=Math.PI*.7;

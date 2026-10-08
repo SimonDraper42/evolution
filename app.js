@@ -1,4 +1,4 @@
-import {Ecosystem, WIDTH, HEIGHT} from './simulation.js';
+import {Ecosystem, WIDTH, HEIGHT, hungerLevel} from './simulation.js';
 const $=id=>document.getElementById(id);
 const canvas=$('world'), ctx=canvas.getContext('2d'), sim=new Ecosystem();
 let type='herbivore',paused=false,speed=1,last=0,statsAt=0;
@@ -27,7 +27,7 @@ function draw(){
   for(let x=0;x<WIDTH;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,HEIGHT);ctx.stroke();}
   for(let y=0;y<HEIGHT;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(WIDTH,y);ctx.stroke();}
   for(const p of sim.food){ctx.fillStyle='#789451';ctx.beginPath();ctx.ellipse(p.x,p.y,3,5,-.5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#a1b976';ctx.fillRect(p.x-1,p.y-3,1,5);}
-  for(const c of sim.creatures){ctx.save();ctx.translate(c.x,c.y);ctx.rotate(c.angle);ctx.shadowBlur=8;ctx.shadowColor=c.type==='herbivore'?'#a6d49655':'#ea9c7655';ctx.fillStyle=c.type==='herbivore'?'#add898':'#e49b77';ctx.beginPath();if(c.type==='herbivore')ctx.ellipse(0,0,c.size+2,c.size,0,0,Math.PI*2);else{ctx.moveTo(c.size+4,0);ctx.lineTo(-c.size,-c.size);ctx.lineTo(-c.size,c.size);ctx.closePath();}ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#203d32';ctx.beginPath();ctx.arc(c.size*.5,-2,1.3,0,Math.PI*2);ctx.fill();ctx.restore();}
+  for(const c of sim.creatures){const hunger=hungerLevel(c);if(hunger>.25){ctx.strokeStyle=`rgba(244,124,85,${hunger*.8})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(c.x,c.y,c.size+6,0,Math.PI*2);ctx.stroke();}ctx.save();ctx.translate(c.x,c.y);ctx.rotate(c.angle);ctx.shadowBlur=8;ctx.shadowColor=c.type==='herbivore'?'#a6d49655':'#ea9c7655';ctx.fillStyle=c.type==='herbivore'?'#add898':'#e49b77';ctx.beginPath();if(c.type==='herbivore')ctx.ellipse(0,0,c.size+2,c.size,0,0,Math.PI*2);else{ctx.moveTo(c.size+4,0);ctx.lineTo(-c.size,-c.size);ctx.lineTo(-c.size,c.size);ctx.closePath();}ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#203d32';ctx.beginPath();ctx.arc(c.size*.5,-2,1.3,0,Math.PI*2);ctx.fill();ctx.restore();}
 }
 function frame(now){const dt=Math.min((now-last)/1000,.05);last=now;if(!paused)for(let i=0;i<speed;i++)sim.step(dt);draw();if(now-statsAt>250){update();statsAt=now;}requestAnimationFrame(frame);}
 sim.reset();update();requestAnimationFrame(now=>{last=now;requestAnimationFrame(frame);});

@@ -22,3 +22,5 @@ node --test simulation.test.mjs
 ```
 
 This is a simplified educational model rather than a scientific simulation. Movement and sensing have energy costs, body size controls predation, green food regrows, and creatures die from hunger or old age. Movement speed gradually falls from 100% at birth to 25% at the end of an 18-day lifespan (180 simulation seconds). Aging does not alter the base speed trait passed to offspring. Offspring inherit mutated traits; changes in population averages can also reflect creatures you manually add. The world supports up to 250 creatures and 300 food patches to keep browser performance manageable. There is no account system or persistence yet.
+
+Hunger increases as energy falls below 65. Hungrier carnivores are more likely to enter two-second aggressive chases, moving up to 40% faster with increased movement energy costs. Hungry herbivores are more likely to make 1.5-second mistakes: turning off course and ignoring herd and predator cues. Feeding reduces hunger and the chance of new events. Orange rings indicate hunger. Age still reduces chase speed, and prey size limits remain in effect.

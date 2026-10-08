@@ -32,3 +32,15 @@ test('added groups vary in size even at slider limits and respect population cap
  for(const type of ['herbivore','carnivore'])for(const size of [4,8,12]){const s=new Ecosystem(()=>.5);const group=s.addGroup(type,{...traits,size});assert.equal(group.length,5);assert.ok(new Set(group.map(c=>c.size)).size===5);assert.ok(group.every(c=>c.size>=4&&c.size<=12&&c.type===type));assert.equal(s.add(type,{...traits,size}).size,size);}
  const s=new Ecosystem(()=>.5);for(let i=0;i<249;i++)s.add('herbivore',traits);assert.equal(s.addGroup('carnivore',traits).length,1);assert.equal(s.creatures.length,250);
 });
+test('hungry hunters are more likely to chase aggressively, at an energy cost',()=>{
+ const run=energy=>{const s=new Ecosystem(()=>.01);const hunter=s.add('carnivore',traits,{x:100,y:100});hunter.energy=energy;s.add('herbivore',{...traits,size:5},{x:200,y:100});s.step(.1);return hunter;};
+ const hungry=run(10),fed=run(65);
+ assert.ok(hungry.aggression>0);assert.equal(fed.aggression,0);assert.ok(hungry.x>fed.x);assert.ok(10-hungry.energy>65-fed.energy);
+});
+test('hungry herbivores can miss predator cues, while fed herbivores flee',()=>{
+ const run=energy=>{const s=new Ecosystem(()=>.01);const herb=s.add('herbivore',{...traits,size:5},{x:100,y:100});herb.energy=energy;s.food.push({x:200,y:100,energy:24});s.add('carnivore',traits,{x:150,y:100});s.step(.1);return herb;};
+ const hungry=run(10),fed=run(65);assert.ok(hungry.mistake>0);assert.equal(fed.mistake,0);assert.ok(hungry.x>100);assert.ok(fed.x<100);
+});
+test('feeding reduces hunger and temporary mistakes expire',async()=>{
+ const {hungerLevel}=await import('./simulation.js');const s=new Ecosystem(()=>.5);const c=s.add('herbivore',traits,{x:100,y:100});c.energy=10;const before=hungerLevel(c);s.food.push({x:100,y:100,energy:24});s.step(.01);assert.ok(hungerLevel(c)<before);c.mistake=.1;c.energy=65;s.step(.2);assert.equal(c.mistake,0);assert.equal(hungerLevel({energy:100}),0);assert.equal(hungerLevel({energy:0}),1);
+});
