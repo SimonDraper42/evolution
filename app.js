@@ -6,7 +6,7 @@ const traits=()=>({speed:Number($('speedTrait').value),sense:Number($('senseTrai
 function select(next){type=next;for(const [id,t] of [['herbType','herbivore'],['carnType','carnivore']]){$(id).classList.toggle('active',t===type);$(id).setAttribute('aria-pressed',String(t===type));}$('typeHelp').textContent=type==='herbivore'?'Grazes on green food and stays close to its herd.':'Hunts herbivores, then smaller carnivores when food is scarce.';}
 $('herbType').onclick=()=>select('herbivore');$('carnType').onclick=()=>select('carnivore');
 for(const trait of ['speed','sense','size']) $(trait+'Trait').oninput=()=>$(trait+'Value').textContent=$(trait+'Trait').value;
-$('add').onclick=()=>{for(let i=0;i<5;i++)sim.add(type,traits());update();};
+$('add').onclick=()=>{sim.addGroup(type,traits());update();};
 canvas.onclick=e=>{const rect=canvas.getBoundingClientRect();sim.add(type,traits(),{x:(e.clientX-rect.left)*WIDTH/rect.width,y:(e.clientY-rect.top)*HEIGHT/rect.height});update();};
 $('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'Resume':'Pause';};
 $('speed').onclick=()=>{speed=speed===1?2:speed===2?4:1;$('speed').textContent=speed+'× speed';};

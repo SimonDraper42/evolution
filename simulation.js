@@ -12,12 +12,24 @@ export class Ecosystem {
     const c = { id: this.nextId++, type, ...point, speed: clamp(traits.speed,.6,3), sense: clamp(traits.sense,40,220), size: clamp(traits.size,4,12), generation, energy: 65, age: 0, cooldown: 12, angle: this.random()*Math.PI*2 };
     this.creatures.push(c); return c;
   }
+  addGroup(type, traits, count = 5) {
+    // Spread each group across a size range, including at slider limits.
+    const low = clamp(traits.size - 3, 4, 9);
+    const high = clamp(traits.size + 3, 7, 12);
+    const added = [];
+    for(let i=0;i<count;i++) {
+      const size = count === 1 ? traits.size : low + (high-low)*i/(count-1);
+      const creature = this.add(type, {...traits, size});
+      if(creature) added.push(creature);
+    }
+    return added;
+  }
   grow() { if(this.food.length < 300) this.food.push({...this.point(), energy: 24}); }
   reset() {
     this.creatures = []; this.food = []; this.time = 0;
     for(let i=0;i<180;i++) this.grow();
-    for(let i=0;i<35;i++) this.add('herbivore',{speed:1.5,sense:100,size:6});
-    for(let i=0;i<6;i++) this.add('carnivore',{speed:1.8,sense:140,size:8});
+    this.addGroup('herbivore',{speed:1.5,sense:100,size:7},35);
+    this.addGroup('carnivore',{speed:1.8,sense:140,size:8},6);
   }
   target(c) {
     if(c.type === 'herbivore') return this.food.filter(p=>distance(c,p)<c.sense).sort((a,b)=>distance(c,a)-distance(c,b))[0];

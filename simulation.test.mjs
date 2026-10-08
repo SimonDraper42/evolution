@@ -24,3 +24,11 @@ test('creatures at the lifespan limit die before eating or reproducing',()=>{
   const s=new Ecosystem(()=>.5);const c=s.add('herbivore',traits,{x:100,y:100});c.age=179.99;c.energy=120;c.cooldown=0;s.food.push({x:100,y:100,energy:24});s.step(.02);
   assert.equal(s.creatures.length,0);assert.equal(s.food.length,1);
 });
+test('new worlds contain small and large creatures of both types',()=>{
+ const s=new Ecosystem(()=>.5);s.reset();
+ for(const type of ['herbivore','carnivore']){const sizes=s.creatures.filter(c=>c.type===type).map(c=>c.size);assert.ok(Math.max(...sizes)-Math.min(...sizes)>=6);assert.ok(sizes.every(size=>size>=4&&size<=12));}
+});
+test('added groups vary in size even at slider limits and respect population cap',()=>{
+ for(const type of ['herbivore','carnivore'])for(const size of [4,8,12]){const s=new Ecosystem(()=>.5);const group=s.addGroup(type,{...traits,size});assert.equal(group.length,5);assert.ok(new Set(group.map(c=>c.size)).size===5);assert.ok(group.every(c=>c.size>=4&&c.size<=12&&c.type===type));assert.equal(s.add(type,{...traits,size}).size,size);}
+ const s=new Ecosystem(()=>.5);for(let i=0;i<249;i++)s.add('herbivore',traits);assert.equal(s.addGroup('carnivore',traits).length,1);assert.equal(s.creatures.length,250);
+});

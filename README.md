@@ -11,7 +11,7 @@ cd /workspace/evolution
 python3 -m http.server 8000 --bind 0.0.0.0
 ```
 
-Open the served application in a browser. Click the landscape to place one creature, or use **Add 5 creatures**. Pause, change simulation speed, or start a new world from the toolbar.
+Open the served application in a browser. Click the landscape to place one creature, or use **Add 5 creatures**. New worlds and added groups contain both small and large creatures of each type. The body size slider sets a typical group size, with a spread of up to three size units on either side within the 4–12 limits. Clicking the landscape places one creature at the exact selected size. Pause, change simulation speed, or start a new world from the toolbar.
 
 ## Validate
 
